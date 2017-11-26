@@ -8,56 +8,77 @@
 \renewcommand{\v}{\boldsymbol}
 \newcommand{\argmax}{arg\,max}
 \begin{document}
-
-\lecture{4}{September 13}{Sasha Rush}{Kojin Oshiba, Michael Ge, Aditya Prasad}{Linear Regression}
+\newcommand{\Norm}{{\mathcal{N}}}
+\newcommand{\trace}{\on{tr}}
+\lecture{4}{September 13}{Sasha Rush}{Kojin Oshiba, Michael Ge, Aditya Prasad, Scott Sussex}{Linear Regression}
 
 \subsection{Multivariate Normal (MVN)}
 The multivariate normal distribution of a $D$-dimensional random vector X is defined as:
 
-$$N(X|\mu,\Sigma) \sim (2\pi)^{-\frac{D}{2}} |\Sigma|^{-\frac{1}{2}}\exp\left(-\frac{1}{2}(X-\mu)^T\Sigma^{-1} (X-\mu)\right)$$
+$$\Norm(X; \mu,\Sigma) \sim (2\pi)^{-\frac{D}{2}} |\Sigma|^{-\frac{1}{2}}\exp\left(-\frac{1}{2}(X-\mu)^T\Sigma^{-1} (X-\mu)\right)$$
 
 Note: \begin{itemize}
-\item $(2\pi)^{-\frac{D}{2}} |\Sigma|^{-\frac{1}{2}}$ and $-\frac{1}{2}$ are constants we can ignore in MLE and MAP calculations. 
+\item $(2\pi)^{-\frac{D}{2}} |\Sigma|^{-\frac{1}{2}}$ and $-\frac{1}{2}$ are constants we can ignore in MLE and MAP calculations for $\mu$. 
 \item $(X-\mu)^T\Sigma^{-1} (X-\mu)$ is a quadratic term.
 \end{itemize}
 
-\noindent There are three types of inference we're interested in doing: MLE, MAP, and prediction.
+\noindent Given a set of $X$ values, there are two types of inference on $\mu$ and $\Sigma$ that we're interested in doing: MLE and MAP. We are also interested in doing predictions on future $X$ values.
 
 \subsection{Maximum Likelihood of MVN} 
 Let $\theta = (\mu, \Sigma)$, where $\Sigma$ can be approximated as a diagonal/low rank matrix. If there are $x_1, \ldots, x_n$ observations, the MLE estimate of $\mu$ is 
-\begin{flalign*}
-\mu^* & = \underset{\mu}{\arg\max} -\sum_{n}logN(x_n|\mu,\Sigma) & \\
-	  & = \underset{\mu}{\arg\max} \quad log(constant) - \sum_{n}(x_n-\mu)^T\Sigma^{-1} (x_n-\mu) & \\
-      & = \underset{\mu}{\arg\max} - \sum_{n}(x_n-\mu)^T\Sigma^{-1} (x_n-\mu)
-\end{flalign*}
+\begin{align*}
+\mu^* & = \underset{\mu}{\arg\max} -\sum_{i=0}^{n}\log \N(x_i;\mu,\Sigma) & \\
+	  & = \underset{\mu}{\arg\max} \quad \log(constant) - \sum_{i=0}^{n}(x_i-\mu)^T\Sigma^{-1} (x_i-\mu) & \\
+      & = \underset{\mu}{\arg\max} - \sum_{i=0}^{n}(x_i-\mu)^T\Sigma^{-1} (x_i-\mu)
+\end{align*}
 
-\noindent Let $L = \sum_{n}(x_n-\mu)^T\Sigma^{-1} (x_n-\mu)$.
+\noindent Let $L = \sum_{i=0}^{n}(x_i-\mu)^T\Sigma^{-1} (x_i-\mu)$.
 
-\begin{flalign*}
+\begin{align*}
 \frac{dL}{d\mu} = \Sigma_{n} \Sigma^{-1} (x_n-\mu) &= 0 & \\
 \Leftrightarrow \mu^*_{MLE} & = \frac{\Sigma_{X_n}}{N} 
-\end{flalign*}
+\end{align*}
 
 \noindent Similarly,
 
-\begin{flalign*}
+\begin{align*}
 \frac{dL}{d\Sigma} = (exercise) & = 0 & \\
-\Leftrightarrow \Sigma^*_{MLE} & = \frac{1}{N} \sum_{n}x_n x_n^T = \frac{1}{N} X^\top X
-\end{flalign*}
+\Leftrightarrow \Sigma^*_{MLE} & = \frac{1}{N} \sum_{i=0}^{n} x_i x_i^T = \frac{1}{N} X^\top X
+\end{align*}
 
-\noindent For calculating $\frac{dL}{d\Sigma}$ as an exercise , the following might be helpful: \\
+\begin{exercise}
+Calculate $\frac{dL}{d\Sigma}$ The following might be helpful: 
 \begin{itemize}
 \item $\frac{d}{dA} ln |A| = A^{-1}$ \\
 \item $\frac{d}{dA} tr(BA) = B^T$ \\
-\item $tr(ABC) = tr(BCA)$
+\item $\trace(ABC) = \trace(BCA)$
 \end{itemize}
+\end{exercise}
+
+\begin{proof}
+(Solution also in Murphy page 102) \\
+Define $\Delta = \Sigma^{-1}$ as the precision matrix. Let 
+\begin{align*}
+L &= \frac{N}{2} \log(|\Delta|) - \frac{1}{2} \sum_{i=0}^{n}(x_i-\mu)^T \Delta (x_i-\mu) \\
+&= \frac{N}{2} \log(|\Delta|) - \frac{1}{2} \sum_{i=0}^{n} \trace((x_i-\mu)^T (x_i-\mu) \Delta
+\end{align*}
+
+Now 
+
+$$\frac{dL}{d\Gamma} = \frac{N}{2} \Delta^{T} - \frac{1}{2} X^T X  $$
+
+
+$\Delta$ is orthogonal so $\Delta^T = \Delta^{-1} = \Sigma$. This gives the result
+
+$$\frac{dL}{d\Sigma} = \frac{N}{2} \Sigma - \frac{1}{2} X^T X   $$
+\end{proof}
 
 
 
  
 \subsection{Linear-Gaussian Models}
 
-Let $x$ be a vector of affine, noisy observations with a prior distribution: $$x \sim N(m_0, S_0)$$ Let $y$ be the outputs: $$y|x \sim N(Ax + b, \Sigma_y)$$
+Let $x$ be a vector of affine, noisy observations with a prior distribution: $$x \sim N(m_0, S_0)$$ Let $y$ be the outputs: $$y|x \sim \Norm(Ax + b, \Sigma_y)$$
 
 \subsubsection{$p(x|y)$}
 We are interested in calculating the posterior distribution: $p(x|y)$.
@@ -88,7 +109,7 @@ We ignore the $k$ term since it too is swallowed up in the proportionality. In a
 \item ``h'' is $m_N = S_N \left[S_0^{-1}m_0 + A^\top \Sigma_y^{-1}(y - b)\right]$
 \end{itemize}
 
-In this more ``intuitive'' representation, we find that $p(x|y)$ has the form of $N(m_N, S_N)$. Murphy also has a more explicit representation:
+In this more ``intuitive'' representation, we find that $p(x|y)$ has the form of $\Norm(m_N, S_N)$. Murphy also has a more explicit representation:
 
 \begin{itemize}
 \item $\Sigma_{x|y} = \Sigma_x^{-1} + A^\top \Sigma_y^{-1}A$
@@ -102,14 +123,14 @@ We now calculate the normalizer term, $p(y)$. Now, $x$ is fixed. $y$ follows the
 $$y = Ax + b + \epsilon$$
 
 The result is that $y$ follows a Normal distribution with the following form:
-$$p(y) = N(y|Am_0 + b, \Sigma_y + A \Sigma_x A^\top)$$
+$$p(y) = \Norm(y;Am_0 + b, \Sigma_y + A \Sigma_x A^\top)$$
 
 \subsubsection{Prior (just for $\mu$)}
-$$p(\mu) = N(\mu|m_0,S_0)$$
-where $m_0$, $S_0$ are pseudo mean, pseudo variance. $p(\mu)$ is defined Gaussian because Gaussian is the conjugate prior of itself. A prior is called a conjugate prior if it has the same distribution as the posterior distribution.
+$$p(\mu) = \Norm(\mu|m_0,S_0)$$
+where $m_0$, $S_0$ are prior mean, prior variance. $p(\mu)$ is defined Gaussian because Gaussian is the conjugate prior of itself. A prior is called a conjugate prior if it has the same distribution as the posterior distribution.
 
 \subsubsection{Posterior (just for $\mu$)}
-$$p(\mu|X) \propto p(\mu)p(X|\mu) = N(\mu|m_0,s_0)N(X|\mu,\Sigma)$$
+$$p(\mu|X) \propto p(\mu)p(X|\mu) = \Norm(\mu|m_0,s_0)\Norm(X;\mu,\Sigma)$$
 This is a special case of linear regression. Recall,
 \begin{itemize}
 \item ``a'' is $S_N^{-1} = S_0^{-1} + A^\top \Sigma_y^{-1}A$
@@ -119,15 +140,15 @@ We let $b=0$ and $A=I$. Then we obtain,
 $$S_N^{-1} = S_0^{-1} + \Sigma^{-1}$$
 $$m_N = S_N[S_0^{-1}m_0+\Sigma^{-1}X]$$
 Hence,
-$$p(\mu|X) = N(m|m_N,S_N)$$
+$$p(\mu|X) = \Norm(m;m_N,S_N)$$
 
 \subsubsection{Unknown Variance}
 Similar to $\mu$, we can also define a conjugate prior on $\Sigma$, which is Inverse Wishart distribution. It is defined as:
-$$IW(\Sigma|S,\nu)=\frac{1}{2}|\Sigma|^{-(\nu-(D+1)/2)}exp\{\frac{1}{2}tr(S^{-1}\Sigma^{-1})\}$$
+$$IW(\Sigma|S,\nu)=\frac{1}{2}|\Sigma|^{-(\nu-(D+1)/2)}\exp\{\frac{1}{2}tr(S^{-1}\Sigma^{-1})\}$$
 
 \begin{itemize}
 \item distribution over positive semi definite $\Sigma$ with two parameters $S,\nu$.
-\item pseudo info $S=\Sigma XX^T$ is a psuedo scatter matrix called the scale matrix. $\nu=n\mu$ is degrees of freedom where $\nu - (D+1)$ is the number of observations.
+\item $S=\Sigma XX^T$ is a prior scatter matrix called the scale matrix. $\nu=n\mu$ is degrees of freedom where $\nu - (D+1)$ is the number of observations.
 \end{itemize}
 
 \subsection{Linear Regression}
@@ -146,7 +167,7 @@ In an undergraduate version of the class, we might define the problem as follows
 	
 \noindent Then, we have:
 	\begin{align*}
-		p(y \given \v{x}, \theta) = \mathcal{N} (y \given \v{w^T}\v{x}, \sigma^2)
+		p(y \given \v{x}, \theta) = \Norm (y \given \v{w^T}\v{x}, \sigma^2)
 	\end{align*}
 \noindent Note that the bias term here is included as a dimension in $\v{w}$, $w_0$.
 
@@ -181,18 +202,18 @@ Consider a data-set that looks like $\left \{ (\v{x_i}, y_i)\right\}_{i=1}^{N}$.
 \subsection{Bayesian Linear Regression}
 In the Bayesian framework, we also introduce a probability distribution on the weights. Here, we choose:
 	\begin{align*}
-		p(\v{w}) = \mathcal{N}(\v{w} \given \v{m_0}, \v{S_0}) 
+		p(\v{w}) = \Norm(\v{w} \given \v{m_0}, \v{S_0}) 
 	\end{align*}
 	
 	Thus, we have:
 	\begin{align*}
-		p(\v{y} \given \v{X}, \v{w}, \v{\mu}, \sigma^2) = \mathcal{N}(\v{y} \given \v{\mu} + \v{X^T} \v{w}, \sigma^2 \v{I})
+		p(\v{y} \given \v{X}, \v{w}, \v{\mu}, \sigma^2) = \Norm(\v{y} \given \v{\mu} + \v{X^T} \v{w}, \sigma^2 \v{I})
 	\end{align*}
 	We assume that $\v{\mu} = 0$.
 	
 The posterior then is of the form:
 \begin{align*}
-	p(\v{w} \given \ldots) \propto \mathcal{N}(\v{w} \given \v{m_0}, \v{S_0}) \mathcal{N}(\v{y} \given  \v{X}^T \v{w}, \sigma^2 \v{I})
+	p(\v{w} \given \ldots) \propto \Norm(\v{w} \given \v{m_0}, \v{S_0}) \Norm(\v{y} \given  \v{X}^T \v{w}, \sigma^2 \v{I})
 \end{align*}
 
 Applying the results obtained above with the linear Gaussian results, with:
@@ -209,12 +230,12 @@ Applying the results obtained above with the linear Gaussian results, with:
 	
 	Now, we compute the posterior predictive:
 	\begin{align*}
-		p(y^{~} \given \v{x}, y) = \int \mathcal{N}(y^{~}\given \v{w}^T \v{x}, \sigma^2) \mathcal{N}(\v{w} \given \v{m_N}, \v{S_N}) d\v{w}
+		p(y^{~} \given \v{x}, y) = \int \Norm(y^{~}\given \v{w}^T \v{x}, \sigma^2) \Norm(\v{w} \given \v{m_N}, \v{S_N}) d\v{w}
 	\end{align*}
 	
 	Using the form for the marginal derived earlier, we have:
 	\begin{align*}
-		p(y^{~} \given \v{x}, y) = \mathcal{N} (y^{~} \given \v{X^T} \v{m_N}, \sigma^2 + \v{X^T} \v{S_0} \v{X})
+		p(y^{~} \given \v{x}, y) = \Norm (y^{~} \given \v{X^T} \v{m_N}, \sigma^2 + \v{X^T} \v{S_0} \v{X})
 	\end{align*}
 	
 	The variance term is particularly interesting because now the variance has dependence on the actual data; thus, the Bayesian method has thus produced a different result. The mean, however, is the same as the MAP estimate ($\v{x}^T \v{m_N}$)
